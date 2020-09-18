@@ -1,0 +1,11 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "appsync-lambda-ddb"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-1nhpe3yzx369y"
+s3_prefix = "appsync-lambda-ddb"
+region = "ap-northeast-2"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "MasterSecretArn=\"\" MasterSecretsManagerKey=\"\" Stage=\"dev\""

@@ -23,35 +23,218 @@ Globals:
     Timeout: 3
 
 Resources:
-  AccountFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+# AppSync 
+  SampleGraphQLApi:
+    Type: 'AWS::AppSync::GraphQLApi'
     Properties:
-      CodeUri: dist/
-      Handler: app.lambdaHandler
-      Runtime: nodejs12.x
-      Events:
-        ListAccounts:
-          Type: Api 
-          Properties:
-            Path: /accounts
-            Method: get
-        CreateAccounts:
-          Type: Api 
-          Properties:
-            Path: /accounts
-            Method: post
+      Name: !Sub "SampleAppsync-${Stage}"
+      AuthenticationType: "AWS_IAM"
 
+  SampleGrappQLSchema:
+    Type: AWS::AppSync::GraphQLSchema
+    Properties: 
+      ApiId: !GetAtt SampleGraphQLApi.ApiId
+      Definition: >
+        type Artist {
+          ArtistId: String
+          Concert: String
+          TicketSales: String
+        }
+        input Conditions {
+          ArtistId: String
+          Concert: String
+        }
+        input InputArtist {
+          ArtistId: String
+          Concert: String
+          TicketSales: String
+        }
+        type Mutation {
+          createArtist(input: InputArtist): Artist
+        }
+        type Query {
+          getArtist(input: Conditions): Artist
+          getConcertsByArtistId(input: Conditions): [Artist]
+        }
+        input param {
+          id: String
+          name: String
+        }
+        schema {
+          query: Query
+          mutation: Mutation
+        }
+  SampleLambdaIAMRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action:
+              - "sts:AssumeRole"
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "appsync.amazonaws.com"
+      Policies:
+        - PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Action:
+                  - "*"
+                Effect: "Allow"
+                Resource:
+                  - !GetAtt SampleFunction.Arn
+          PolicyName: "SampleLambdaRole"
+
+  SampleLambdaDatasource:
+    Type: AWS::AppSync::DataSource
+    Properties: 
+      Name: !Sub "SampleLambdaDataSource"
+      ApiId: !GetAtt SampleGraphQLApi.ApiId
+      Description: test
+      Type: AWS_LAMBDA
+      ServiceRoleArn: !GetAtt SampleLambdaIAMRole.Arn
+      LambdaConfig: 
+        LambdaFunctionArn: !GetAtt SampleFunction.Arn
+          
+  SampleResolver1:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt SampleGraphQLApi.ApiId
+      TypeName: 'Query'
+      FieldName: 'getConcertsByArtistId'
+      DataSourceName: !GetAtt SampleLambdaDatasource.Name
+      
+  SampleResolver2:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt SampleGraphQLApi.ApiId
+      TypeName: 'Query'
+      FieldName: 'getArtist'
+      DataSourceName: !GetAtt SampleLambdaDatasource.Name
+  
+  SampleResolver3:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt SampleGraphQLApi.ApiId
+      TypeName: 'Mutation'
+      FieldName: 'createArtist'
+      DataSourceName: !GetAtt SampleLambdaDatasource.Name
+
+  # Lambda
+  SampleFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.lambdaHandler
+      CodeUri: app/
+      Runtime: nodejs12.x
+      MemorySize: 128
+      Timeout: 100
+      Description: A simple example includes a HTTP get method to get one item by id from a DynamoDB table.
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref SampleTable
+      Environment:
+        Variables:
+          SAMPLE_TABLE: !Ref SampleTable
+          SECRET_ARN: !Ref MasterSecretArn
+          SECRET_MASTER: !Ref MasterSecretsManagerKey
+          STAGE: !Ref Stage
+
+  # Dynamodb
+  SampleTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        -
+          AttributeName: "ArtistId"
+          AttributeType: "S"
+        -
+          AttributeName: "Concert"
+          AttributeType: "S"
+        -
+          AttributeName: "TicketSales"
+          AttributeType: "S"
+      KeySchema:
+        -
+          AttributeName: "ArtistId"
+          KeyType: "HASH"
+        -
+          AttributeName: "Concert"
+          KeyType: "RANGE"
+      GlobalSecondaryIndexes:
+        -
+          IndexName: "GSI"
+          KeySchema:
+            -
+              AttributeName: "TicketSales"
+              KeyType: "HASH"
+          Projection:
+            ProjectionType: "KEYS_ONLY"
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+  WriteCapacityScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: 15
+      MinCapacity: 5
+      ResourceId: !Join
+        - /
+        - - table
+          - !Ref SampleTable
+      RoleARN: !GetAtt ScalingRole.Arn
+      ScalableDimension: dynamodb:table:WriteCapacityUnits
+      ServiceNamespace: dynamodb
+  ScalingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - application-autoscaling.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        -
+          PolicyName: "root"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action:
+                  - "dynamodb:DescribeTable"
+                  - "dynamodb:UpdateTable"
+                  - "cloudwatch:PutMetricAlarm"
+                  - "cloudwatch:DescribeAlarms"
+                  - "cloudwatch:GetMetricStatistics"
+                  - "cloudwatch:SetAlarmState"
+                  - "cloudwatch:DeleteAlarms"
+                Resource: "*"
+  WriteScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: WriteAutoScalingPolicy
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref WriteCapacityScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 50.0
+        ScaleInCooldown: 60
+        ScaleOutCooldown: 60
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBWriteCapacityUtilization
 
 Outputs:
-  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
-  # Find out more about other implicit resources you can reference within SAM
-  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  HelloWorldApi:
-    Description: "API Gateway endpoint URL for Prod stage for Account function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/account/"
-  AccountFunction:
-    Description: "Account Lambda Function ARN"
-    Value: !GetAtt AccountFunction.Arn
-  AccountFunctionIamRole:
-    Description: "Implicit IAM Role created for Account function"
-    Value: !GetAtt AccountFunctionRole.Arn
+  WebEndpoint:
+    Description: "AppSyncGraphQL endpoint URL for Prod stage"
+    Value: !GetAtt SampleGraphQLApi.GraphQLUrl

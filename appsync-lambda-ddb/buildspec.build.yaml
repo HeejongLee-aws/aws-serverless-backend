@@ -10,7 +10,7 @@ phases:
   pre_build:
     commands:
       - echo "Install dependencies"
-      - cd account
+      - cd app
       - npm install
       - npm run build
       - cd ..
