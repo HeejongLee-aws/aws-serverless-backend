@@ -2,32 +2,40 @@ import {
     attribute,
     hashKey,
     rangeKey,
-    table,
+    table
 } from '@aws/dynamodb-data-mapper-annotations';
 
-@table('Payment')
+@table("Payment")
 class Payment {
     
     @hashKey()
-    partitionKey:string
+    private partitionkey:string
 
     @rangeKey()
-    sortKey:string
+    private sortkey:string
 
     @attribute()
-    title:string
+    private attribute1:string
 
+    @attribute()
+    private attribute2:string
 
-    constructor(partitionKey:string, sortKey:string, title:string) {
-        this.partitionKey = partitionKey;
-        this.sortKey = sortKey;
-        this.title = title;
+    public domainlogic(): string {
+        this.attribute1 = "1";
+        return this.attribute1;
     }
 
-
-    get toJson(): String {
-        return JSON.stringify(this);
+    public static getObject(partitionkey:string, sortkey:string, attribute1:string):Payment {
+        return Object.assign(new Payment,
+            {
+                partitionkey: partitionkey,
+                sortkey: sortkey,
+                attribute1: attribute1
+            }
+        );
+        // https://github.com/awslabs/dynamodb-data-mapper-js/issues/136
     }
+    
 }
 
 export default Payment;
