@@ -1,10 +1,10 @@
-import AccountController from './controller/AccountController';
-
+let AWS = require("aws-sdk");
 
 const tableName = process.env.SAMPLE_TABLE;
 const dynamodb = require('aws-sdk/clients/dynamodb');
 const docClient = new dynamodb.DocumentClient();
-AWS.config.update({ region: "us-west-2" });
+
+AWS.config.update({ region: "ap-northeast-2" });
 
 async function createArtist(artistId, concert, ticketSales){
     let params = {
@@ -72,19 +72,4 @@ exports.lambdaHandler = async (event, context) => {
     return response;
 }
 
-// export async function lambdaHandler(event, context) {
-//     let accountController = new AccountController();
-
-//     try {
-//         if (event.httpMethod === 'POST' && event.path === '/accounts') {
-//             response = accountController.createAccount(event);
-//         } else if (event.httpMethod === 'GET' && event.path === '/accounts') {
-//             response = accountController.listAccount(event);
-//         }
-//     } catch (err) {
-//         console.log(err);
-//         return err;
-//     }
-
-//     return response
-// };
+console.log(getArtist("희종일", ""));

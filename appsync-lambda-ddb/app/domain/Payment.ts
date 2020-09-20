@@ -1,14 +1,29 @@
+import {
+    attribute,
+    hashKey,
+    rangeKey,
+    table,
+} from '@aws/dynamodb-data-mapper-annotations';
+
+@table('Payment')
 class Payment {
-    id:string;
-    name:string;
-    constructor(id:string, name:string) {
-        this.id = id;
-        this.name = name;
+    
+    @hashKey()
+    partitionKey:string
+
+    @rangeKey()
+    sortKey:string
+
+    @attribute()
+    title:string
+
+
+    constructor(partitionKey:string, sortKey:string, title:string) {
+        this.partitionKey = partitionKey;
+        this.sortKey = sortKey;
+        this.title = title;
     }
 
-    get toString(): string {
-        return this.id+":"+this.name;
-    }
 
     get toJson(): String {
         return JSON.stringify(this);
@@ -16,6 +31,3 @@ class Payment {
 }
 
 export default Payment;
-
-// let payment:Payment = new Payment("1", "이희종");
-// console.log(payment.toJson);
