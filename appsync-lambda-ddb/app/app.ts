@@ -4,6 +4,7 @@ import AccountController from './controller/AccountController';
 const tableName = process.env.SAMPLE_TABLE;
 const dynamodb = require('aws-sdk/clients/dynamodb');
 const docClient = new dynamodb.DocumentClient();
+
 AWS.config.update({ region: "us-west-2" });
 
 async function createArtist(artistId, concert, ticketSales){

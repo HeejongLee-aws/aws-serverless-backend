@@ -7,10 +7,12 @@
   "author": "SAM CLI",
   "license": "MIT",
   "dependencies": {
+    "@aws/dynamodb-data-mapper": "^0.7.3",
     "@aws/dynamodb-data-mapper-annotations": "^0.7.3",
     "@types/node": "^10.17.28",
     "aws-sdk": "^2.756.0",
-    "axios": "^0.18.0"
+    "axios": "^0.18.0",
+    "reflect-metadata": "^0.1.13"
   },
   "scripts": {
     "prebuild": "mkdirp ../dist || true",

@@ -9,9 +9,14 @@ class PaymentService {
         this.paymentRepository = new PaymentMockRepository();
     }
 
+    public requestCreatePayment(/*  {클래스 아이디, 수강인원, 가족정보, {클래스 아이디, 수강인원, 가족정보} */): string {
+
+        return '';
+    }
+
     public createPayment(path: string): string {
         let payment: Payment = this.paymentRepository.save(new Payment("001", "KIM JONG IL"));
-        return payment.toString;
+        return payment.toString;d
     }
 
     public listPayment(path: string): string {
