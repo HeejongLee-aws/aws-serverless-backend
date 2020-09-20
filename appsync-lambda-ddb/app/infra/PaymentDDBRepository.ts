@@ -1,11 +1,15 @@
 import Payment from "../domain/Payment";
 import PaymentRepository from "../domain/PaymentRepository";
 import * as AWS from 'aws-sdk';
-import {DataMapper} from '@aws/dynamodb-data-mapper';
+import {DataMapper, QueryOptions} from '@aws/dynamodb-data-mapper';
 import { 
     AttributePath,FunctionExpression,
     UpdateExpression,
-    ConditionExpressionPredicate
+    ConditionExpression,
+    ConditionExpressionPredicate,
+    ContainsPredicate,
+    between,
+    beginsWith
 } from '@aws/dynamodb-expressions';
 
 // https://aws.amazon.com/ko/blogs/developer/introducing-the-amazon-dynamodb-datamapper-for-javascript-developer-preview/
@@ -23,7 +27,12 @@ class PaymentDDBRepository implements PaymentRepository{
         return this.mapper.put(payment);
     }
 
-    public async get(partitionkey:string, sortkey:string){
+    /**
+     * 
+     * @param partitionkey 
+     * @param sortkey 
+     */
+    public async get(partitionkey:string, sortkey:string){ // primary key
 
         const toGet = Object.assign(new Payment, 
             {
@@ -33,23 +42,31 @@ class PaymentDDBRepository implements PaymentRepository{
         return await this.mapper.get(toGet);
     }
 
-    // https://www.npmjs.com/package/@aws/dynamodb-expressions
+
+    /**
+     * 
+     * @param partitionkey 
+     * @param sortkey 
+     */
 
     public async query(partitionkey:string, sortkey:string){
-        const keyCondition = {
-            partitionkey: partitionkey
+        
+        let containsCondition: ConditionExpressionPredicate = {
+            name:'contains',
+            expected: '4',
+            type: 'Function'
         };
-
-        let queryOptions = {
-            filter:
-            {
-                type: 'Equals',
-                object: "test",
-                subject: sortkey
+        
+        const iterator = this.mapper.query(
+            Payment, 
+            {     // key condition  (partitionkey, range key you can use expression ( beginwith, between.. and so on))
+                partitionkey: partitionkey, 
+                sortkey: beginsWith(sortkey)
             }
-        }
-
-        const iterator = this.mapper.query(Payment, keyCondition, queryOptions);
+            ,{
+                limit: 1
+            }
+        );    
 
         for await (const record of iterator) {
             console.log(record, iterator.count, iterator.scannedCount);
@@ -68,6 +85,8 @@ test.save(Payment.getObject("isheejong", "2020-09-20#4", "강좌2"));
 test.save(Payment.getObject("isheejong", "2020-09-20#5", "강좌3"));
 test.save(Payment.getObject("isheejong", "2020-09-20#6", "강좌4"));
 test.save(Payment.getObject("isheejong", "2020-09-20#7", "강좌4"));
+test.save(Payment.getObject("isheejong", "2020-09-21#1", "강좌4"));
+test.save(Payment.getObject("isheejong", "2020-09-21#2", "강좌4"));
 
 // test.save("isheejong", "2020-09-20#1", "강좌1");
 // test.save("isheejong", "2020-09-20#1", "강좌2");
@@ -76,4 +95,4 @@ test.save(Payment.getObject("isheejong", "2020-09-20#7", "강좌4"));
 // test.save("isheejong", "2020-09-20#3", "강좌5");
 // test.save("isheejong", "2020-09-20#3", "강좌6");
 
-test.query("isheejong", "2020-09-20");
+test.query("isheejong", "2020-09-21");
