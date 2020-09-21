@@ -12,7 +12,7 @@ exports.lambdaHandler = async (event, context) => {
     if( event.info.fieldName == 'createBeforePaymemt' ){
         
         let result:Response = await paymentController.createBeforePayment(event);
-        response = result.body;
+        response = result.data;
 
     } else {
         console.log("does not exist the mapping fieldName");

@@ -12,13 +12,7 @@ import {
     beginsWith
 } from '@aws/dynamodb-expressions';
 
-/**
- * 
- * https://aws.amazon.com/ko/blogs/developer/introducing-the-amazon-dynamodb-datamapper-for-javascript-developer-preview/
- * https://github.com/awslabs/dynamodb-data-mapper-js/tree/master/packages/dynamodb-data-mapper
- * https://awslabs.github.io/dynamodb-data-mapper-js/packages/dynamodb-expressions/
- * 
- */
+
 class PaymentDDBRepository implements PaymentRepository{
 
     private mapper:DataMapper = new DataMapper({
@@ -29,6 +23,7 @@ class PaymentDDBRepository implements PaymentRepository{
     }
 
     public async save(payment:Payment) {
+        console.log("save : " , payment);
         return await this.mapper.put(payment);
     }
 

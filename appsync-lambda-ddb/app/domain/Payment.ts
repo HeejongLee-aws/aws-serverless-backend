@@ -5,7 +5,7 @@ import {
     table
 } from '@aws/dynamodb-data-mapper-annotations';
 
-@table(String(process.env.SAMPLE_TABLE))
+@table('appsync-lambda-ddb-PaymentTable-SLR2SSXZPOFG')
 class Payment {
     
     @hashKey()

@@ -6,9 +6,6 @@ class PaymentMockRepository implements PaymentRepository {
     public async save(payment:Payment) {
         
         return new Promise<Payment>((resolve, reject) => {
-
-            let name = 'Dave'
-       
             if (name === 'Dave') {
                 resolve(payment);
             }
@@ -18,9 +15,17 @@ class PaymentMockRepository implements PaymentRepository {
          });
     }
 
-    public async get(partitionkey:string, sortkey:string){ // primary key
+    public async get(partitionkey:string, sortkey:string) { // primary key
 
-        return new Promise();
+        return new Promise<Payment>((resolve, reject) => {
+            if (name === 'Dave') {
+                resolve(new Payment);
+            }
+            else {
+               reject("Error");
+            }
+         });
+
     }
 
 

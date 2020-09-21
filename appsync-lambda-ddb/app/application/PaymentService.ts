@@ -13,20 +13,18 @@ class PaymentService {
         this.paymentRepository = new PaymentDDBRepository();
     }
 
-    public createBeforePayment(request:BeforePayment): Payment {
+    public async createBeforePayment(request:BeforePayment): Promise<Payment> {
 
+        console.log("requested : ", request);
         let payment:Payment = Payment.createObject(
-            request.getPartitionkey,
-            request.getSortkey,
-            request.getAttribute1,
-            request.getAttribute2
+            request.partitionkey,
+            request.sortkey,
+            request.attribute1,
+            request.attribute2
         );
         
-        let result:Payment = new Payment();
-        this.paymentRepository.save(payment).then( payment => {
-            result = payment;
-        });
-        return result;
+
+        return await this.paymentRepository.save(payment);
     }
 
     
@@ -45,3 +43,5 @@ class PaymentService {
 }
 
 export default PaymentService;
+
+let test:PaymentService = new PaymentService;
