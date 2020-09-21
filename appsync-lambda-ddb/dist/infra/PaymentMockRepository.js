@@ -35,30 +35,37 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-var PaymentController_1 = __importDefault(require("./controller/PaymentController"));
-var paymentController = new PaymentController_1.default();
-exports.lambdaHandler = function (event, context) { return __awaiter(void 0, void 0, void 0, function () {
-    var response, result;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                console.info('received:', event);
-                console.info('context:', context);
-                if (!(event.info.fieldName == 'createBeforePaymemt')) return [3 /*break*/, 2];
-                return [4 /*yield*/, paymentController.createBeforePayment(event)];
-            case 1:
-                result = _a.sent();
-                response = result.body;
-                return [3 /*break*/, 3];
-            case 2:
-                console.log("does not exist the mapping fieldName");
-                response = 'does not exist the mapping fieldName';
-                _a.label = 3;
-            case 3: return [2 /*return*/, response];
-        }
-    });
-}); };
+var PaymentMockRepository = /** @class */ (function () {
+    function PaymentMockRepository() {
+    }
+    PaymentMockRepository.prototype.save = function (payment) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                return [2 /*return*/];
+            });
+        });
+    };
+    PaymentMockRepository.prototype.get = function (partitionkey, sortkey) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                return [2 /*return*/];
+            });
+        });
+    };
+    /**
+     * query items by condition
+     *
+     * @param partitionkey
+     * @param sortkey
+     */
+    PaymentMockRepository.prototype.query = function (partitionkey, sortkey) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                return [2 /*return*/];
+            });
+        });
+    };
+    return PaymentMockRepository;
+}());
+exports.default = PaymentMockRepository;

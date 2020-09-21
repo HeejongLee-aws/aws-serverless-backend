@@ -1,0 +1,5 @@
+{
+    "PaymentFunction": {
+      "SAMPLE_TABLE": "appsync-lambda-ddb-PaymentTable-SLR2SSXZPOFG"
+    }
+  }

@@ -1,16 +1,40 @@
 import Payment from "../domain/Payment";
 import PaymentRepository from "../domain/PaymentRepository";
 
-class PaymentDDBRepository implements PaymentRepository{
+class PaymentMockRepository implements PaymentRepository {
 
-    findAll(): Array<Payment> {
-        return [new Payment("000","KANG SUNG IL"),new Payment("001", "KIM JONG IL"), new Payment("002", "LEE HEE JONG")]
+    public async save(payment:Payment) {
+        
+        return new Promise<Payment>((resolve, reject) => {
+
+            let name = 'Dave'
+       
+            if (name === 'Dave') {
+                resolve(payment);
+            }
+            else {
+               reject("Error");
+            }
+         });
     }
 
-    save(payment: Payment): Payment {
-        return payment;
+    public async get(partitionkey:string, sortkey:string){ // primary key
+
+        return new Promise();
+    }
+
+
+    /**
+     * query items by condition
+     * 
+     * @param partitionkey 
+     * @param sortkey 
+     */
+
+    public async query(partitionkey:string, sortkey:string){
+        
     }
     
 }
 
-export default PaymentDDBRepository;
+export default PaymentMockRepository;

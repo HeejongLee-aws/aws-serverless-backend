@@ -1,32 +1,47 @@
 import Payment from "../domain/Payment";
 import PaymentRepository from "../domain/PaymentRepository";
 import PaymentMockRepository from "../infra/PaymentMockRepository"
+import PaymentDDBRepository from "../infra/PaymentDDBRepository";
+import {BeforePayment} from "./interfaces/BeforePayment.interface";
+import {CompletePayment} from "./interfaces/CompletePayment.interface";
+
 
 class PaymentService {
     paymentRepository: PaymentRepository;
 
     constructor() {
-        this.paymentRepository = new PaymentMockRepository();
+        this.paymentRepository = new PaymentDDBRepository();
     }
 
-    public requestCreatePayment(/*  {클래스 아이디, 수강인원, 가족정보, {클래스 아이디, 수강인원, 가족정보} */): string {
+    public createBeforePayment(request:BeforePayment): Payment {
 
-        return '';
+        let payment:Payment = Payment.createObject(
+            request.getPartitionkey,
+            request.getSortkey,
+            request.getAttribute1,
+            request.getAttribute2
+        );
+        
+        let result:Payment = new Payment();
+        this.paymentRepository.save(payment).then( payment => {
+            result = payment;
+        });
+        return result;
     }
 
-    public createPayment(path: string): string {
-        let payment: Payment = this.paymentRepository.save(new Payment("001", "KIM JONG IL"));
-        return payment.toString;d
-    }
+    
+    public async completePayment(request:CompletePayment): Promise<Payment> {
+        
+        let payment:Payment = await this.paymentRepository.get(request.id, request.id);
 
-    public listPayment(path: string): string {
-        let paymentList: Array<Payment> = this.paymentRepository.findAll();
-        let paymentString: string = "";
-        paymentList.forEach(payment => { 
-            paymentString+= payment.toString + " "; 
-            console.log(paymentString)});
-        return paymentString;
+        // change payment info
+        
+        // 결제수단 정보...
+        //
+        
+        return await this.paymentRepository.save(payment);
     }
+   
 }
 
 export default PaymentService;

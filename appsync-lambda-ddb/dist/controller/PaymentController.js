@@ -39,26 +39,32 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var PaymentController_1 = __importDefault(require("./controller/PaymentController"));
-var paymentController = new PaymentController_1.default();
-exports.lambdaHandler = function (event, context) { return __awaiter(void 0, void 0, void 0, function () {
-    var response, result;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                console.info('received:', event);
-                console.info('context:', context);
-                if (!(event.info.fieldName == 'createBeforePaymemt')) return [3 /*break*/, 2];
-                return [4 /*yield*/, paymentController.createBeforePayment(event)];
-            case 1:
-                result = _a.sent();
-                response = result.body;
-                return [3 /*break*/, 3];
-            case 2:
-                console.log("does not exist the mapping fieldName");
-                response = 'does not exist the mapping fieldName';
-                _a.label = 3;
-            case 3: return [2 /*return*/, response];
-        }
-    });
-}); };
+var PaymentService_1 = __importDefault(require("../application/PaymentService"));
+var BeforePayment_interface_1 = require("../application/interfaces/BeforePayment.interface");
+var PaymentController = /** @class */ (function () {
+    function PaymentController() {
+        this.paymentService = new PaymentService_1.default();
+    }
+    PaymentController.prototype.createBeforePayment = function (event) {
+        return __awaiter(this, void 0, void 0, function () {
+            var beforePayment, result;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        beforePayment = new BeforePayment_interface_1.BeforePayment('isheejong', '1', '2', '3');
+                        console.log(" start controller: " + event);
+                        return [4 /*yield*/, this.paymentService.createBeforePayment(beforePayment)];
+                    case 1:
+                        result = _a.sent();
+                        console.log(" end controller: " + result.toJson);
+                        return [2 /*return*/, {
+                                'statusCode': 200,
+                                'body': result
+                            }];
+                }
+            });
+        });
+    };
+    return PaymentController;
+}());
+exports.default = PaymentController;

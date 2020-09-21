@@ -24,47 +24,65 @@ Globals:
 
 Resources:
 # AppSync 
-  SampleGraphQLApi:
+  PaymentGraphQLApi:
     Type: 'AWS::AppSync::GraphQLApi'
     Properties:
-      Name: !Sub "SampleAppsync-${Stage}"
+      Name: !Sub "Emart-CultureClub-Payment-${Stage}"
       AuthenticationType: "AWS_IAM"
 
-  SampleGrappQLSchema:
+  PaymentGraphQLSchema:
     Type: AWS::AppSync::GraphQLSchema
     Properties: 
-      ApiId: !GetAtt SampleGraphQLApi.ApiId
+      ApiId: !GetAtt PaymentGraphQLApi.ApiId
       Definition: >
-        type Artist {
-          ArtistId: String
-          Concert: String
-          TicketSales: String
+        input InputBeforePayment {
+          partitionkey: String
+          sortkey: String
+          attribute1: String
+          attribute2: String
         }
-        input Conditions {
-          ArtistId: String
-          Concert: String
+
+        type Payment {
+          partitionkey: String
+          sortkey: String
+          attribute1: String
+          attribute2: String
         }
-        input InputArtist {
-          ArtistId: String
-          Concert: String
-          TicketSales: String
-        }
-        type Mutation {
-          createArtist(input: InputArtist): Artist
-        }
-        type Query {
-          getArtist(input: Conditions): Artist
-          getConcertsByArtistId(input: Conditions): [Artist]
-        }
-        input param {
-          id: String
-          name: String
-        }
+
         schema {
           query: Query
           mutation: Mutation
         }
-  SampleLambdaIAMRole:
+
+        type Mutation {
+          createBeforePaymemt(input: InputBeforePayment): Payment
+        }
+
+        type Query {
+          getPaymentHistory(userid: String): Payment
+        }
+
+
+  CreateBeforePaymentResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt PaymentGraphQLApi.ApiId
+      TypeName: 'Mutation'
+      FieldName: 'createBeforePaymemt'
+      DataSourceName: !GetAtt PaymentFunctionDatasource.Name
+
+  PaymentFunctionDatasource:
+    Type: AWS::AppSync::DataSource
+    Properties: 
+      Name: "PaymentFunctionDatasource"
+      ApiId: !GetAtt PaymentGraphQLApi.ApiId
+      Description: "Payment Datasource with Lambda function"
+      Type: AWS_LAMBDA
+      ServiceRoleArn: !GetAtt EmartCultureClubPaymentLambdaIAMRole.Arn
+      LambdaConfig: 
+        LambdaFunctionArn: !GetAtt PaymentFunction.Arn
+          
+  EmartCultureClubPaymentLambdaIAMRole:
     Type: "AWS::IAM::Role"
     Properties:
       AssumeRolePolicyDocument:
@@ -84,91 +102,81 @@ Resources:
                   - "*"
                 Effect: "Allow"
                 Resource:
-                  - !GetAtt SampleFunction.Arn
-          PolicyName: "SampleLambdaRole"
-
-  SampleLambdaDatasource:
-    Type: AWS::AppSync::DataSource
-    Properties: 
-      Name: !Sub "SampleLambdaDataSource"
-      ApiId: !GetAtt SampleGraphQLApi.ApiId
-      Description: test
-      Type: AWS_LAMBDA
-      ServiceRoleArn: !GetAtt SampleLambdaIAMRole.Arn
-      LambdaConfig: 
-        LambdaFunctionArn: !GetAtt SampleFunction.Arn
-          
-  SampleResolver1:
-    Type: AWS::AppSync::Resolver
-    Properties:
-      ApiId: !GetAtt SampleGraphQLApi.ApiId
-      TypeName: 'Query'
-      FieldName: 'getConcertsByArtistId'
-      DataSourceName: !GetAtt SampleLambdaDatasource.Name
+                  - !GetAtt PaymentFunction.Arn
+          PolicyName: "EmartCultureClubPaymentLambdaRole"
       
-  SampleResolver2:
-    Type: AWS::AppSync::Resolver
-    Properties:
-      ApiId: !GetAtt SampleGraphQLApi.ApiId
-      TypeName: 'Query'
-      FieldName: 'getArtist'
-      DataSourceName: !GetAtt SampleLambdaDatasource.Name
-  
-  SampleResolver3:
-    Type: AWS::AppSync::Resolver
-    Properties:
-      ApiId: !GetAtt SampleGraphQLApi.ApiId
-      TypeName: 'Mutation'
-      FieldName: 'createArtist'
-      DataSourceName: !GetAtt SampleLambdaDatasource.Name
 
   # Lambda
-  SampleFunction:
+  PaymentFunction:
     Type: AWS::Serverless::Function
     Properties:
       Handler: app.lambdaHandler
-      CodeUri: app/
+      CodeUri: dist/
       Runtime: nodejs12.x
+      Events:
+        HelloWorld:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /test
+            Method: POST
+
       MemorySize: 128
       Timeout: 100
       Description: A simple example includes a HTTP get method to get one item by id from a DynamoDB table.
+      
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Ref SampleTable
+            TableName: !Ref PaymentTable
       Environment:
         Variables:
-          SAMPLE_TABLE: !Ref SampleTable
+          SAMPLE_TABLE: !Ref PaymentTable
           SECRET_ARN: !Ref MasterSecretArn
           SECRET_MASTER: !Ref MasterSecretsManagerKey
           STAGE: !Ref Stage
 
   # Dynamodb
-  SampleTable:
+  PaymentTable:
     Type: AWS::DynamoDB::Table
     Properties:
       AttributeDefinitions:
         -
-          AttributeName: "ArtistId"
+          AttributeName: "partitionkey"
           AttributeType: "S"
         -
-          AttributeName: "Concert"
+          AttributeName: "sortkey"
           AttributeType: "S"
         -
-          AttributeName: "TicketSales"
+          AttributeName: "attribute1"
           AttributeType: "S"
+        -
+          AttributeName: "attribute2"
+          AttributeType: "S"
+
+
       KeySchema:
         -
-          AttributeName: "ArtistId"
+          AttributeName: "partitionkey"
           KeyType: "HASH"
         -
-          AttributeName: "Concert"
+          AttributeName: "sortkey"
           KeyType: "RANGE"
       GlobalSecondaryIndexes:
         -
-          IndexName: "GSI"
+          IndexName: "GSI-1"
           KeySchema:
             -
-              AttributeName: "TicketSales"
+              AttributeName: "attribute1"
+              KeyType: "HASH"
+          Projection:
+            ProjectionType: "KEYS_ONLY"
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+        -
+          IndexName: "GSI-2"
+          KeySchema:
+            -
+              AttributeName: "attribute2"
               KeyType: "HASH"
           Projection:
             ProjectionType: "KEYS_ONLY"
@@ -186,7 +194,7 @@ Resources:
       ResourceId: !Join
         - /
         - - table
-          - !Ref SampleTable
+          - !Ref PaymentTable
       RoleARN: !GetAtt ScalingRole.Arn
       ScalableDimension: dynamodb:table:WriteCapacityUnits
       ServiceNamespace: dynamodb
@@ -237,4 +245,4 @@ Resources:
 Outputs:
   WebEndpoint:
     Description: "AppSyncGraphQL endpoint URL for Prod stage"
-    Value: !GetAtt SampleGraphQLApi.GraphQLUrl
+    Value: !GetAtt PaymentGraphQLApi.GraphQLUrl

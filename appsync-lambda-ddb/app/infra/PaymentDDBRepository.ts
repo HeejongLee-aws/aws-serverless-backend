@@ -12,8 +12,13 @@ import {
     beginsWith
 } from '@aws/dynamodb-expressions';
 
-// https://aws.amazon.com/ko/blogs/developer/introducing-the-amazon-dynamodb-datamapper-for-javascript-developer-preview/
-// https://github.com/awslabs/dynamodb-data-mapper-js/tree/master/packages/dynamodb-data-mapper
+/**
+ * 
+ * https://aws.amazon.com/ko/blogs/developer/introducing-the-amazon-dynamodb-datamapper-for-javascript-developer-preview/
+ * https://github.com/awslabs/dynamodb-data-mapper-js/tree/master/packages/dynamodb-data-mapper
+ * https://awslabs.github.io/dynamodb-data-mapper-js/packages/dynamodb-expressions/
+ * 
+ */
 class PaymentDDBRepository implements PaymentRepository{
 
     private mapper:DataMapper = new DataMapper({
@@ -24,14 +29,9 @@ class PaymentDDBRepository implements PaymentRepository{
     }
 
     public async save(payment:Payment) {
-        return this.mapper.put(payment);
+        return await this.mapper.put(payment);
     }
 
-    /**
-     * 
-     * @param partitionkey 
-     * @param sortkey 
-     */
     public async get(partitionkey:string, sortkey:string){ // primary key
 
         const toGet = Object.assign(new Payment, 
@@ -44,30 +44,19 @@ class PaymentDDBRepository implements PaymentRepository{
 
 
     /**
+     * query items by condition
      * 
      * @param partitionkey 
      * @param sortkey 
      */
-
     public async query(partitionkey:string, sortkey:string){
-        
-        let containsCondition: ConditionExpressionPredicate = {
-            name:'contains',
-            expected: '4',
-            type: 'Function'
-        };
-        
         const iterator = this.mapper.query(
             Payment, 
-            {     // key condition  (partitionkey, range key you can use expression ( beginwith, between.. and so on))
+            {   // key condition - (partitionkey, range key you can use expression ( beginwith, between.. and so on))
                 partitionkey: partitionkey, 
                 sortkey: beginsWith(sortkey)
             }
-            ,{
-                limit: 1
-            }
         );    
-
         for await (const record of iterator) {
             console.log(record, iterator.count, iterator.scannedCount);
         }
@@ -76,23 +65,12 @@ class PaymentDDBRepository implements PaymentRepository{
 }
 export default PaymentDDBRepository;
 
-let test:PaymentDDBRepository = new PaymentDDBRepository();
+// let test:PaymentDDBRepository = new PaymentDDBRepository();
 
-test.save(Payment.getObject("isheejong", "2020-09-20#1", "강좌1"));
-test.save(Payment.getObject("isheejong", "2020-09-20#2", "강좌1"));
-test.save(Payment.getObject("isheejong", "2020-09-20#3", "강좌2"));
-test.save(Payment.getObject("isheejong", "2020-09-20#4", "강좌2"));
-test.save(Payment.getObject("isheejong", "2020-09-20#5", "강좌3"));
-test.save(Payment.getObject("isheejong", "2020-09-20#6", "강좌4"));
-test.save(Payment.getObject("isheejong", "2020-09-20#7", "강좌4"));
-test.save(Payment.getObject("isheejong", "2020-09-21#1", "강좌4"));
-test.save(Payment.getObject("isheejong", "2020-09-21#2", "강좌4"));
+// console.log("save")
+// // let item = await test.save(Payment.getObject("isheejong", "2020-09-21#1", "강좌1"));
 
-// test.save("isheejong", "2020-09-20#1", "강좌1");
-// test.save("isheejong", "2020-09-20#1", "강좌2");
-// test.save("isheejong", "2020-09-20#2", "강좌3");
-// test.save("isheejong", "2020-09-20#2", "강좌4");
-// test.save("isheejong", "2020-09-20#3", "강좌5");
-// test.save("isheejong", "2020-09-20#3", "강좌6");
 
-test.query("isheejong", "2020-09-21");
+// console.log("end save");
+
+// test.query("isheejong", "2020-09-21");

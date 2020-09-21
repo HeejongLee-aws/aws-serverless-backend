@@ -39,26 +39,43 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var PaymentController_1 = __importDefault(require("./controller/PaymentController"));
-var paymentController = new PaymentController_1.default();
-exports.lambdaHandler = function (event, context) { return __awaiter(void 0, void 0, void 0, function () {
-    var response, result;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                console.info('received:', event);
-                console.info('context:', context);
-                if (!(event.info.fieldName == 'createBeforePaymemt')) return [3 /*break*/, 2];
-                return [4 /*yield*/, paymentController.createBeforePayment(event)];
-            case 1:
-                result = _a.sent();
-                response = result.body;
-                return [3 /*break*/, 3];
-            case 2:
-                console.log("does not exist the mapping fieldName");
-                response = 'does not exist the mapping fieldName';
-                _a.label = 3;
-            case 3: return [2 /*return*/, response];
-        }
-    });
-}); };
+var Payment_1 = __importDefault(require("../domain/Payment"));
+var PaymentDDBRepository_1 = __importDefault(require("../infra/PaymentDDBRepository"));
+var PaymentService = /** @class */ (function () {
+    function PaymentService() {
+        this.paymentRepository = new PaymentDDBRepository_1.default();
+    }
+    PaymentService.prototype.createBeforePayment = function (request) {
+        return __awaiter(this, void 0, void 0, function () {
+            var payment;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        payment = Payment_1.default.createObject(request.getPartitionkey, request.getSortkey, request.getAttribute1, request.getAttribute2);
+                        return [4 /*yield*/, this.paymentRepository.save(payment)];
+                    case 1: return [2 /*return*/, _a.sent()];
+                }
+            });
+        });
+    };
+    PaymentService.prototype.completePayment = function (request) {
+        return __awaiter(this, void 0, void 0, function () {
+            var payment;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.paymentRepository.get(request.id, request.id)];
+                    case 1:
+                        payment = _a.sent();
+                        return [4 /*yield*/, this.paymentRepository.save(payment)];
+                    case 2: 
+                    // change payment info
+                    // 결제수단 정보...
+                    //
+                    return [2 /*return*/, _a.sent()];
+                }
+            });
+        });
+    };
+    return PaymentService;
+}());
+exports.default = PaymentService;

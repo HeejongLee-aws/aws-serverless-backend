@@ -1,6 +1,7 @@
 import Response from './interfaces/Response';
 import { AwsEvent } from './interfaces/AwsEvent.interface';
 import PaymentService from '../application/PaymentService';
+import { BeforePayment } from '../application/interfaces/BeforePayment.interface';
 
 class PaymentController {
     
@@ -10,86 +11,28 @@ class PaymentController {
         this.paymentService = new PaymentService();
     }
 
-    // 결제생성요청
-    public requestCreatePayment(event:AwsEvent): Response {
+    public async createBeforePayment(event:AwsEvent): Promise<Response> {
         
-        let path = event.path;
-        let result:string=this.paymentService.createPayment(path);
+        // TODO: mapping with event
+        let beforePayment = new BeforePayment (
+            'isheejong',
+            '1',
+            '2',
+            '3'
+        );
 
+        
+        
+        console.log(" start controller: " + event);
+
+        let result = await this.paymentService.createBeforePayment(beforePayment);
+           
+        console.log(" end controller: " + result.toJson ); 
         return {
-            'statusCode': 200,
-            'body': JSON.stringify({
-                message: result
-            })
+                'statusCode': 200,
+                'body': result
+                }
         }
     }
-
-
-    // 결제 완료
-    public completePayment(event:AwsEvent): Response {
-        let path = event.path;
-        let result:string=this.paymentService.createPayment(path);
-
-        return {
-            'statusCode': 200,
-            'body': JSON.stringify({
-                message: result
-            })
-        }
-    }
-    
-    // 포인트 적립
-    public accumulatePoints(event:AwsEvent): Response {
-        let path = event.path;
-        let result:string=this.paymentService.createPayment(path);
-
-        return {
-            'statusCode': 200,
-            'body': JSON.stringify({
-                message: result
-            })
-        }
-    }
-
-    // 포인트 사용
-    public usePoints(event:AwsEvent): Response {
-        let path = event.path;
-        let result:string=this.artistService.createPayment(path);
-
-        return {
-            'statusCode': 200,
-            'body': JSON.stringify({
-                message: result
-            }) 
-        }
-    }
-
-    // 수강좌석 해제
-    public releasetSeat(event:AwsEvent): Response {
-        let path = event.path;
-        let result:string=this.paymentService.createPayment(path);
-
-        return {
-            'statusCode': 200,
-            'body': JSON.stringify({
-                message: result
-            })
-        } 
-    }
-
-
-    // 수강좌석 예약
-    public reserveSeat(event:AwsEvent): Response {
-        let path = event.path;
-        let result:string=this.paymentService.createPayment(path);
-
-        return {
-            'statusCode': 200,
-            'body': JSON.stringify({
-                message: result
-            })
-        }
-    }
-}
 
 export default PaymentController;

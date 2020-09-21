@@ -5,7 +5,7 @@ import {
     table
 } from '@aws/dynamodb-data-mapper-annotations';
 
-@table("Payment")
+@table(String(process.env.SAMPLE_TABLE))
 class Payment {
     
     @hashKey()
@@ -20,20 +20,34 @@ class Payment {
     @attribute()
     private attribute2:string
 
+    /**
+     * 
+     */
     public domainlogic(): string {
         this.attribute1 = "1";
         return this.attribute1;
     }
 
-    public static getObject(partitionkey:string, sortkey:string, attribute1:string):Payment {
+    get toJson(): string {
+        return JSON.stringify(this);
+    }
+
+    /**
+     * 
+     * https://github.com/awslabs/dynamodb-data-mapper-js/issues/136
+     * @param partitionkey 
+     * @param sortkey 
+     * @param attribute1 
+     */
+    public static createObject(partitionkey:string, sortkey:string, attribute1:string, attribute2:string):Payment {
         return Object.assign(new Payment,
             {
                 partitionkey: partitionkey,
                 sortkey: sortkey,
-                attribute1: attribute1
+                attribute1: attribute1,
+                attribute2: attribute2
             }
         );
-        // https://github.com/awslabs/dynamodb-data-mapper-js/issues/136
     }
     
 }
